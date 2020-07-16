@@ -61,15 +61,14 @@
                 //Set gravity for the scene (G force like, on Y-axis)
                 scene.gravity = new BABYLON.Vector3(0, -0.9, 0);
 
+                scene.registerBeforeRender(function () {camera.position.y = cameraEyeHeight;})
+
                 // Enable Collisions
                 //scene.collisionsEnabled = true;
                 box.checkCollisions = true;
 
                 //Then apply collisions and gravity to the active camera
                 camera.checkCollisions = true;
-                camera.ellipsoid = {x:0.05, y:cameraEyeHeight/2, z:0.05};
-                camera.applyGravity = true;
-                camera._needMoveForGravity = true;
 
                 // Load the sound and play it automatically once ready
                 var music = new BABYLON.Sound("Music", "music.wav", scene, soundReady, {

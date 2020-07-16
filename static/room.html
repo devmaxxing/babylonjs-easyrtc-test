@@ -45,11 +45,11 @@
                 var camera = new BABYLON.FreeCamera("FreeCamera", new BABYLON.Vector3(0, cameraEyeHeight, -20), scene);
                 camera.attachControl(canvas, true);
 
-                //Simple crate
-                var box = new BABYLON.MeshBuilder.CreateBox("crate", {
-                    width: 40, 
-                    height: 50,
-                    depth: 40,
+                //Simple room
+                var box = new BABYLON.MeshBuilder.CreateBox("room", {
+                    width: 100, 
+                    height: 100,
+                    depth: 100,
                     sideOrientation: 1
                 }, scene);
                 
@@ -62,14 +62,23 @@
                 scene.gravity = new BABYLON.Vector3(0, -0.9, 0);
 
                 // Enable Collisions
-                scene.collisionsEnabled = true;
+                //scene.collisionsEnabled = true;
                 box.checkCollisions = true;
 
                 //Then apply collisions and gravity to the active camera
-                // camera.ellipsoid = new BABYLON.Vector3(1, 1, 1);
                 camera.checkCollisions = true;
+                camera.ellipsoid = {x:0.05, y:cameraEyeHeight/2, z:0.05};
                 camera.applyGravity = true;
                 camera._needMoveForGravity = true;
+
+                // Load the sound and play it automatically once ready
+                var music = new BABYLON.Sound("Music", "music.wav", scene, soundReady, {
+                loop: true, autoplay: 1});
+
+                function soundReady(){
+                    music.play();
+                }
+
                 return scene;
             }
             var scene = createScene();

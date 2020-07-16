@@ -67,9 +67,6 @@
 
                 //Then apply collisions and gravity to the active camera
                 camera.checkCollisions = true;
-                camera.ellipsoid = {x:0.05, y:cameraEyeHeight/2, z:0.05};
-                camera.applyGravity = true;
-                camera._needMoveForGravity = true;
 
                 // Load the sound and play it automatically once ready
                 var music = new BABYLON.Sound("Music", "music.wav", scene, soundReady, {

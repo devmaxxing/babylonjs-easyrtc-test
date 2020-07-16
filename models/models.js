@@ -13,9 +13,9 @@ class Object3d {
 }
 
 // Key and Door are graphical objects
-class Key extends Object3d{}
-class Door extends Object3d{}
-class Person extends Object3d{}
+class Key extends Object3dModel{}
+class Door extends Object3dModel{}
+class Person extends Object3dModel{}
 
 // A client is a web client that renders the game.
 // Each client will keep track of the door and key coordinates
@@ -26,20 +26,22 @@ class Client {
             throw new Error("id param needs to be defined");
         }
 
+        this.id = id;
+
         // can contain any kind of Object3d
         this.Objects = new Map();
 
         // add key
         let key = new Key('key')
-        this.Objects.addObject(key.id, key);
+        this.addObject(key.id, key);
 
         // add door
         let door = new Door('door');
-        this.Objects.addObject(door.id, door);
+        this.addObject(door.id, door);
 
         // person
         let person = new Person('person');
-        this.Objects.addObject(person.id, person);
+        this.addObject(person.id, person);
     }
 
     addObject(object3d) {

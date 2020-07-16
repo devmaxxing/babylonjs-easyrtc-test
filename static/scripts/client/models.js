@@ -34,20 +34,20 @@ const Models = (function (){
     
             // add key
             let key = new Key('key')
-            this.addObject(key.id, key);
+            this.addObject(key);
     
             // add door
             let door = new Door('door');
-            this.addObject(door.id, door);
+            this.addObject(door);
     
             // person
             let person = new Person('person');
-            this.addObject(person.id, person);
+            this.addObject(person);
         }
     
         addObject(object3d) {
             if (!this.Objects.has(object3d.id)) {
-                this.Objects.set(object3d);
+                this.Objects.set(object3d.id, object3d);
             }
         }
     

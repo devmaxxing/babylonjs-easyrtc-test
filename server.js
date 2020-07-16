@@ -44,6 +44,43 @@ const webServer = http.createServer(app);
 // Start Socket.io so it attaches itself to Express server
 const socketServer = socketIo.listen(webServer, {"log level":1});
 
+let myIceServers = [
+    {"url":"stun:stun.l.google.com:19302"},
+    {"url":"stun:stun1.l.google.com:19302"},
+    {"url":"stun:stun2.l.google.com:19302"},
+    {"url":"stun:stun3.l.google.com:19302"}
+    // {
+    //   "url":"turn:[ADDRESS]:[PORT]",
+    //   "username":"[USERNAME]",
+    //   "credential":"[CREDENTIAL]"
+    // },
+    // {
+    //   "url":"turn:[ADDRESS]:[PORT][?transport=tcp]",
+    //   "username":"[USERNAME]",
+    //   "credential":"[CREDENTIAL]"
+    // }
+];
+
+// self provided turn servers
+if (process.env.STUN_SERVER) {
+    myIceServers = [
+        {"url":process.env.STUN_SERVER}
+    ]
+    var servers = process.env.TURN_SERVERS.split(",");
+    for (var i = 0; i < servers.length; i++) {
+        myIceServers.push(
+        {
+            "url":servers[i],
+            "username":process.env.TURN_USERNAME,
+            "credential":process.env.TURN_CREDENTIAL
+        }
+        )
+    }
+}
+
+console.log("Ice Servers: " + JSON.stringify(myIceServers));
+
+easyrtc.setOption("appIceServers", myIceServers);
 easyrtc.setOption("logLevel", "debug");
 
 // To test, lets print the credential to the console for every room join!

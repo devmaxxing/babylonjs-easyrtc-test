@@ -33,323 +33,43 @@
             var canvas = document.getElementById('renderCanvas');
             var engine = new BABYLON.Engine(canvas, true);
 
-            BABYLON.PolygonMeshBuilder.prototype.wallBuilder = function (w0, w1) {
-                var positions = [];	
-                var direction = w1.corner.subtract(w0.corner).normalize();
-                var angle = Math.acos(direction.x);
-                if(direction.z !=0) {
-                    angle *= direction.z/Math.abs(direction.z);
-                }	
-                this._points.elements.forEach(function (p) {
-                    positions.push(p.x * Math.cos(angle) + w0.corner.x, p.y, p.x * Math.sin(angle) + w0.corner.z);
-                });
-                var indices = [];		
-                var res = earcut(this._epoints, this._eholes, 2);
-                for (var i = res.length; i > 0; i--) {
-                    indices.push(res[i - 1]);
-                };			
-                return {positions: positions, indices: indices};
-            };
-
-            var createScene = function() { 
+            var createScene = function () {
                 var scene = new BABYLON.Scene(engine);
-                var camera = new BABYLON.FreeCamera('camera', new BABYLON.Vector3(0, 5, -10), scene);
-                // Load the sound and play it automatically once ready
-                var music = new BABYLON.Sound("Music", "music.wav", scene, null, {loop: true, autoplay: true});
-                
-                camera.attachControl(canvas, false);
-                var light = new BABYLON.HemisphericLight("hemiLight", new BABYLON.Vector3(5, 10, 0), scene);
-                var corner = function (x, y) {
-                    return new BABYLON.Vector3(x, 0, y);
-                }
-                
-                var door = function (width, height) {
-                    this.width = width;
-                    this.height = height;
-                    this.left = 0;
-                }
-                
-                var doorSpace = function(door, left) {
-                    this.door = door;
-                    this.left = left;
-                }
-                
-                var wall = function(corner, doorSpaces) {
-                    this.corner = corner;
-                    this.doorSpaces = doorSpaces || [];
-                }
-                
-                var buildFromPlan = function(walls, ply, height, scene) {
-                    var outerData = [];
-                    var angle = 0;
-                    var direction = 0;
-                    var line = BABYLON.Vector3.Zero();
-                    walls[1].corner.subtractToRef(walls[0].corner, line);
-                    var nextLine = BABYLON.Vector3.Zero();
-                    walls[2].corner.subtractToRef(walls[1].corner, nextLine);
-                    var nbWalls = walls.length;
-                    for(var w = 0; w <= nbWalls; w++) {	
-                        angle = Math.acos(BABYLON.Vector3.Dot(line, nextLine)/(line.length() * nextLine.length()));
-                        direction = BABYLON.Vector3.Cross(nextLine, line).normalize().y;
-                        lineNormal = new BABYLON.Vector3(line.z, 0, -1 * line.x).normalize();
-                        line.normalize();
-                        outerData[(w + 1) % nbWalls] = walls[(w + 1) % nbWalls].corner.add(lineNormal.scale(ply)).add(line.scale(direction * ply/Math.tan(angle/2)));		
-                        line = nextLine.clone();		
-                        walls[(w + 3) % nbWalls].corner.subtractToRef(walls[(w + 2) % nbWalls].corner, nextLine);	
-                    }
-                
-                    var positions = [];
-                    var indices = [];
-                
-                    for(var w = 0; w < nbWalls; w++) {
-                        positions.push(walls[w].corner.x, walls[w].corner.y, walls[w].corner.z); // inner corners base
-                    }
-                
-                    for(var w = 0; w < nbWalls; w++) {
-                        positions.push(outerData[w].x, outerData[w].y, outerData[w].z); // outer corners base
-                    }
-                
-                    var currentLength = positions.length;  // inner and outer top corners
-                    for(var w = 0; w < currentLength/3; w++) {
-                        positions.push(positions[3*w]);
-                        positions.push(height);
-                        positions.push(positions[3*w + 2]);
-                    }
-                    
-                    // Wall Construction
-                    var polygonCorners;
-                    var polygonTriangulation;
-                    var wallData;
-                    var wallDirection = BABYLON.Vector3.Zero();
-                    var wallNormal = BABYLON.Vector3.Zero(); 
-                    var wallLength;
-                    
-                    for(var w = 0; w < nbWalls; w++) {
-                        walls[(w + 1) % nbWalls].corner.subtractToRef(walls[w].corner, wallDirection);
-                        wallLength = wallDirection.length();
-                        wallDirection.normalize();
-                        wallNormal.x = wallDirection.z;
-                        wallNormal.z = -1 * wallDirection.x;
-                        if(walls[w].doorSpaces) {
-                            walls[w].doorSpaces.sort(compareLeft);
-                        }
-                        var doors = walls[w].doorSpaces.length;
-                        
-                        polygonCorners = [];
-                        polygonCorners.push(new BABYLON.Vector2(0, 0));
-                        
-                        for (var d = 0; d < doors; d++) {			
-                            polygonCorners.push(new BABYLON.Vector2(walls[w].doorSpaces[d].left, 0));
-                            polygonCorners.push(new BABYLON.Vector2(walls[w].doorSpaces[d].left, walls[w].doorSpaces[d].door.height));
-                            polygonCorners.push(new BABYLON.Vector2(walls[w].doorSpaces[d].left + walls[w].doorSpaces[d].door.width, walls[w].doorSpaces[d].door.height));
-                            polygonCorners.push(new BABYLON.Vector2(walls[w].doorSpaces[d].left + walls[w].doorSpaces[d].door.width, 0));			
-                        }
 
-                        polygonCorners.push(new BABYLON.Vector2(wallLength, 0));
-                        polygonCorners.push(new BABYLON.Vector2(wallLength, height));
-                        polygonCorners.push(new BABYLON.Vector2(0, height));
-                        
-                        polygonTriangulation = new BABYLON.PolygonMeshBuilder("", polygonCorners, scene);	
+                // Lights
+                var light0 = new BABYLON.DirectionalLight("Omni", new BABYLON.Vector3(-2, -5, 2), scene);
+                var light1 = new BABYLON.PointLight("Omni", new BABYLON.Vector3(2, -5, -2), scene);
 
-                        for(var h = 0; h < holes.length; h++) {
-                            polygonTriangulation.addHole(holes[h]);
-                        }
-                        
-                        wallData = polygonTriangulation.wallBuilder(walls[w], walls[(w + 1) % nbWalls]);	
-                    
-                        wallData.positions.splice(3*(4 * doors + 1), 9); // 3 positions * 3 entries per position			
-                        wallData.positions.splice(0, 3); // 1 position * 3 entries per position	
+                cameraEyeHeight = 1.6;
+                // Need a free camera for collisions
+                var camera = new BABYLON.FreeCamera("FreeCamera", new BABYLON.Vector3(0, cameraEyeHeight, -20), scene);
+                camera.attachControl(canvas, true);
 
-                        nbIndices = positions.length/3;
-                        
-                        //Positions for inner doors added
-                        positions = positions.concat(wallData.positions);
+                //Simple crate
+                var box = new BABYLON.MeshBuilder.CreateBox("crate", {
+                    width: 40, 
+                    height: 50,
+                    depth: 40,
+                    sideOrientation: 1
+                }, scene);
+                
+                box.material = new BABYLON.StandardMaterial("Mat", scene);
+                box.material.specularColor = new BABYLON.Color3.Black();
+                // box.material.diffuseTexture.hasAlpha = true;
+                box.position = new BABYLON.Vector3(0, 0, -20);
 
-                        indices = indices.concat(wallData.indices.map(function(idx){
-                            if (idx == 0) {
-                                return w;
-                            }
-                            else if (idx == 4 * doors + 1) {
-                                return(w + 1) % nbWalls;
-                            }
-                            else if (idx == 4 * doors + 2) {
-                                return ((w + 1) % nbWalls) + 2 * nbWalls;
-                            }
-                            else if(idx == 4 * doors + 3) {
-                                return w + 2 * nbWalls;
-                            }
-                            else if(idx > 4 * doors) {
-                                return idx + nbIndices - 4;
-                            }
-                            else {
-                                return idx + nbIndices - 1;
-                            }
-                        }));
-                        
-                        //Positions for outer doors added
-                        currentLength = positions.length;
-                    
-                        for(var p = nbIndices; p < currentLength/3; p++) {
-                            positions.push(positions[3 * p] + ply * wallNormal.x, positions[3 * p + 1], positions[3 * p + 2] + ply * wallNormal.z);
-                        }
+                //Set gravity for the scene (G force like, on Y-axis)
+                scene.gravity = new BABYLON.Vector3(0, -0.9, 0);
 
-                        wallData.indices.reverse();
-                        
-                        indices = indices.concat(wallData.indices.map(function(idx){
-                            if (idx == 0) {
-                                return w + nbWalls;
-                            }
-                            else if (idx == 4 * doors + 1) {
-                                return(w + 1) % nbWalls + nbWalls;
-                            }
-                            else if (idx == 4 * doors + 2) {
-                                return ((w + 1) % nbWalls) + 3 * nbWalls;
-                            }
-                            else if(idx == 4 * doors + 3) {
-                                return w + 3 * nbWalls;
-                            }
-                            else if(idx > 4 * doors) {
-                                return idx + nbIndices - 4 + 4 * (doors);
-                            }
-                            else {
-                                return idx + nbIndices - 1 + 4 * (doors);
-                            }
-                        }));
-                        
-                        //base and door top and door sides
-                        var doorsLeft = doors;
-                        var doorNb = 0;
-                        
-                        var inbase = w; // inner base index
-                        var ind0 = nbIndices + 4 * doorNb; //inner door index bottom left
-                        var ind1 = ind0 + 1; //inner door index top left
-                        var ind2 = ind1 + 1; //inner door index top right
-                        var ind3 = ind2 + 1; //inner door index bottom right
-                        var outbase = inbase + nbWalls; //outer base index 
-                        var outd0 = ind0 + 4 * (doors); //outer door index bottom left
-                        var outd1 = ind1 + 4 * (doors); //outer door index top left
-                        var outd2 = ind2 + 4 * (doors); //outer door index top right
-                        var outd3 = ind3 + 4 * (doors); //outer door index bottom right
-                        
-                        if (doorsLeft > 0) {
-                            //base
-                            indices.push(inbase, ind0, outd0, outd0, outbase, inbase);
-                            //left side
-                            indices.push(ind0, ind1, outd1,ind0, outd1, outd0);
-                            //top
-                            indices.push(outd1, ind2, outd2,  outd1, ind1, ind2);
-                            //right side
-                            indices.push(ind2, outd3, outd2, ind2, ind3, outd3);
-                        }
-                        doorsLeft--
-                        doorNb++
-                        
-                        while (doorsLeft > 0 ) {
-                            inbase = ind3; // inner base index
-                            ind0 += 4; //inner door index bottom left
-                            ind1 += 4; //inner door index top left
-                            ind2 += 4; //inner door index top right
-                            ind3 += 4; //inner door index bottom right
-                            outbase = outd3; //outer base index 
-                            outd0 += 4; //outer door index bottom left
-                            outd1 += 4;; //outer door index top left
-                            outd2 += 4;; //outer door index top right
-                            outd3 += 4;; //outer door index bottom right
-                            
-                            //base
-                            indices.push(inbase, ind0, outd0, outd0, outbase, inbase);
-                            //left side
-                            indices.push(ind0, ind1, outd1,ind0, outd1, outd0);
-                            //top
-                            indices.push(outd1, ind2, outd2,  outd1, ind1, ind2);
-                            //right side
-                            indices.push(ind2, outd3, outd2, ind2, ind3, outd3);
-                            
-                            doorsLeft--
-                            doorNb++
-                            
-                        }
-                        
-                        //final base
-                        if(doors > 0) {
-                            inbase = ind3; // inner base index
-                            outbase = outd3; //outer base index 
-                        }
-                        indices.push(inbase, (w + 1) % nbWalls, (w + 1) % nbWalls + nbWalls, outbase, inbase, (w + 1) % nbWalls + nbWalls);
-                    
-                        var compareLeft = function(a, b) {
-                            return a.left - b.left
-                        }
-                        
-                    }		
-                    
-                    //top facets pushed to indices array
-                    for(var w = 0; w <nbWalls; w++) {
-                        indices.push(3 * nbWalls + (w + 1) % nbWalls, 2 * nbWalls + (w + 1) % nbWalls, 3 * nbWalls + w, w + 3 * nbWalls, (w + 1) % nbWalls + 2 * nbWalls, w + 2 * nbWalls) 
-                    }		
-                
-                    var normals = [];
-                    var uvs = [];
-                
-                    BABYLON.VertexData.ComputeNormals(positions, indices, normals);
-                    BABYLON.VertexData._ComputeSides(BABYLON.Mesh.FRONTSIDE, positions, indices, normals, uvs);
-            
-                    //Create a custom mesh  
-                    var customMesh = new BABYLON.Mesh("custom", scene);
+                // Enable Collisions
+                scene.collisionsEnabled = true;
+                box.checkCollisions = true;
 
-                    //Create a vertexData object
-                    var vertexData = new BABYLON.VertexData();
-
-                    //Assign positions and indices to vertexData
-                    vertexData.positions = positions;
-                    vertexData.indices = indices;
-                    vertexData.normals = normals;
-                    vertexData.uvs = uvs;	
-
-                    //Apply vertexData to custom mesh
-                    vertexData.applyToMesh(customMesh);
-                    
-                    return customMesh;
-                }
-                
-                baseData = [-5, 0, 5, 0, 5, 10, -5, 10];
-                
-                var corners = [];
-                for(b = 0; b < baseData.length/2; b++) {
-                    corners.push(new corner(baseData[2*b], baseData[2*b + 1]));
-                }
-                
-                var door = new door(1, 2);
-                
-                var walls = [];
-                for(c=0; c<corners.length; c++) {
-                    walls.push(new wall(corners[c], [new doorSpace(door, 2)]));
-                }
-                
-                var ply = 0.3;
-                var height = 5;
-                        
-                var build = buildFromPlan(walls, ply, height, scene);
-                
-                showNormals(build, 2, new BABYLON.Color3(1, 0, 0));
-                
-                function showNormals(mesh, size, color, sc) {
-                    var normals = mesh.getVerticesData(BABYLON.VertexBuffer.NormalKind);
-                    var positions = mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);
-                    color = color || BABYLON.Color3.White();
-                    sc = sc || scene;
-                    size = size || 1;
-
-                    var lines = [];
-                    for (var i = 0; i < normals.length; i += 3) {
-                        var v1 = BABYLON.Vector3.FromArray(positions, i);
-                        var v2 = v1.add(BABYLON.Vector3.FromArray(normals, i).scaleInPlace(size));
-                        lines.push([v1.add(mesh.position), v2.add(mesh.position)]);
-                    }
-                    var normalLines = BABYLON.MeshBuilder.CreateLineSystem("normalLines", {lines: lines}, sc);
-                    normalLines.color = color;
-                    return normalLines;
-                }
+                //Then apply collisions and gravity to the active camera
+                // camera.ellipsoid = new BABYLON.Vector3(1, 1, 1);
+                camera.checkCollisions = true;
+                camera.applyGravity = true;
+                camera._needMoveForGravity = true;
                 return scene;
             }
             var scene = createScene();

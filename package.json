@@ -1,0 +1,23 @@
+{
+  "name": "babylonjs-easyrtc-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oliverfei/babylonjs-easyrtc-test.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/oliverfei/babylonjs-easyrtc-test/issues"
+  },
+  "homepage": "https://github.com/oliverfei/babylonjs-easyrtc-test#readme",
+  "dependencies": {
+    "koa": "^2.13.0",
+    "open-easyrtc": "^2.0.5"
+  }
+}

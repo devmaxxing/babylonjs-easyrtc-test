@@ -6,6 +6,8 @@ const serveStatic = require('serve-static');  // serve static files
 const socketIo = require("socket.io");        // web socket external module
 const easyrtc = require("open-easyrtc"); // EasyRTC
 
+const port = process.env.PORT || 8080;
+
 const rooms = new Set();
 let rtcApp;
 
@@ -66,6 +68,6 @@ rtc = easyrtc.listen(app, socketServer, null, function(err, rtcRef) {
 });
 
 // Listen on port 8080
-webServer.listen(8080, function () {
-    console.log('listening on http://localhost:8080');
+webServer.listen(port, function () {
+    console.log('listening on http://localhost:' + port);
 });

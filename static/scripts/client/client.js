@@ -12,6 +12,9 @@ class Client {
 
     init() {
         console.log('Initializing client...');
+        this.easyrtc.setStreamAcceptor((easyrtcid, stream, streamName) => {
+            this.easyrtc.setVideoObjectSrc(this.audio,stream);
+        });
         this.easyrtc.enableVideo(false);
         this.easyrtc.enableVideoReceive(false);
         this.easyrtc.initMediaSource(() => {
@@ -25,9 +28,6 @@ class Client {
                 console.log("Successfully connected to app. Joining room " + this.room);
                 this.easyrtc.joinRoom(this.room, null, (room) => {
                     console.log("Connected to room " + room);
-                    easyrtc.setStreamAcceptor((easyrtcid, stream, streamName) => {
-                        easyrtc.setVideoObjectSrc(this.audio,stream);
-                     });
                 }, (errorCode, errorText, roomName) => {
                     console.error("Failed to join room " + roomName);
                     console.error(`${errorCode + ": " + errorText}`);

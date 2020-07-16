@@ -1,14 +1,38 @@
 class Client {
-    constructor(easyrtc) {
-
+    constructor(easyrtc, room) {
         // model will be defined when app is ready so that we can get an id
         this.model = null;
         this.easyrtc = easyrtc;
+        this.room = room;
+        if (room == null) {
+            this.room ="default";
+        }
     }
 
     init() {
-        console.log('Initializing client...')
-        this.easyrtc.easyApp("Company_chat_line", "self", ['caller'], this.appReady.bind(this));
+        console.log('Initializing client...');
+        this.easyrtc.enableVideo(false);
+        this.easyrtc.enableVideoReceive(false);
+        this.easyrtc.initMediaSource(() => {
+            console.log("Initialized media source. Connecting to app...");
+        },
+        (errorCode, errorText) => {
+            console.error(`${errorCode + ": " + errorText}`);
+        });
+        this.easyrtc.connect("BabylonTest",
+            () => {
+                console.log("Successfully connected to app. Joining room " + this.room);
+                this.easyrtc.joinRoom(this.room, null, (room) => {
+                    console.log("Connected to room " + room);
+                }, (errorCode, errorText, roomName) => {
+                    console.error("Failed to join room " + roomName);
+                    console.error(`${errorCode + ": " + errorText}`);
+                });
+            },
+            (errorCode, errorText) => {
+                console.error(`${errorCode + ": " + errorText}`);
+            }
+        );
     }
 
     appReady(appId) {
@@ -18,15 +42,10 @@ class Client {
     }
 
     addListeners() {
-        this.easyrtc.setRoomOccupantListener(this.loggedInListener.bind(this))
+        this.easyrtc.setRoomOccupantListener(this.loggedInListener.bind(this));
     }
 
     loggedInListener() {
-        console.log(123)
+        console.log(123);
     }
 }
-
-window.addEventListener('load', async () => {
-    const client = new Client(easyrtc);
-    await client.init()
-});

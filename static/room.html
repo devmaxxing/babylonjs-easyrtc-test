@@ -27,8 +27,17 @@
 </head>
 <body>
     <canvas id="renderCanvas"></canvas>
+    <!-- SCRIPTS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+    <script src="./scripts/client/models.js"></script>
+    <script src="./scripts/vendor/easyrtc.js"></script>
+    <script src="./scripts/client/client.js"></script>
     <script>
         window.addEventListener('DOMContentLoaded', function() {
+            const roomName = decodeURI(new URLSearchParams(document.location.search).get("roomName"));
+            const client = new Client(easyrtc, roomName);
+            client.init();
+
             // All the following code is entered here.
             var canvas = document.getElementById('renderCanvas');
             var engine = new BABYLON.Engine(canvas, true);

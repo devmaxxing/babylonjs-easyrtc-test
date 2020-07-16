@@ -26,6 +26,7 @@
     </style>
 </head>
 <body>
+    <video id="callerAudio" autoplay="autoplay" playsinline="playsinline"></video>
     <canvas id="renderCanvas"></canvas>
     <!-- SCRIPTS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
@@ -35,7 +36,8 @@
     <script>
         window.addEventListener('DOMContentLoaded', function() {
             const roomName = decodeURI(new URLSearchParams(document.location.search).get("roomName"));
-            const client = new Client(easyrtc, roomName);
+            const audio = document.getElementById('callerAudio');
+            const client = new Client(easyrtc, roomName, audio);
             client.init();
 
             // All the following code is entered here.

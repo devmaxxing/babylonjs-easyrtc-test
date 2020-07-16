@@ -1,23 +1,70 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./scripts/vendor/easyrtc.css">
-    <title>CLIENT</title>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8"/>
+    <title>Babylon Easyrtc Test</title>
 </head>
 <body>
-
-    <video  style="float:left" id="self" width="300" height="200" muted="muted"></video>
-    <div style="position:relative;float:left;width:300px">
-       <video id="caller" width="300" height="200"></video>
+    <div>
+        <h1>Rooms</h1>
+        <button id="refreshButton" onclick="loadRooms()">Refresh</button>
+        <div id="roomList">
+        </div>
     </div>
+    <div>
+        <h1>Create Room</h1>
+        <div>
+            <label>Name:</label>
+            <input id="roomNameInput"/>
+            <button id="createRoomButton" onclick="createRoom()">Create Room</button>
+        </div>
+    </div>
+    <script>
+        const rooms = new Set();
 
+        function addRoom(room) 
+        {
+            if(!rooms.has(room)) {
+                rooms.add(room);
+                const roomList = document.getElementById("roomList");
+                const roomLinkContainer = document.createElement("div");
+                const newRoomLink = document.createElement("a");
+                newRoomLink.innerText = "Join Room: " + room;
+                newRoomLink.setAttribute("href", "/room.html?roomName=" + encodeURI(room));
+                roomLinkContainer.appendChild(newRoomLink);
+                roomList.appendChild(roomLinkContainer);
+            }
+        }
 
-    <!-- SCRIPTS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
-    <script src="./scripts/client/models.js"></script>
-    <script src="./scripts/vendor/easyrtc.js"></script>
-    <script src="./scripts/client/client.js"></script>
+        function loadRooms() {
+            console.log("fetching rooms...");
+            fetch("/rooms")
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                for (let room of data.rooms) {
+                    addRoom(room);
+                }
+            });
+        }
+
+        function createRoom() {
+            const roomName = document.getElementById("roomNameInput").value;
+            fetch("/rooms", {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({name: roomName})
+            }).then(() => {
+                loadRooms();
+            });
+        }
+
+        
+        loadRooms();
+        
+    </script>
 </body>
 </html>

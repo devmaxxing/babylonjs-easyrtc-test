@@ -20,6 +20,10 @@ class Client {
     addListeners() {
         this.easyrtc.setRoomOccupantListener(this.loggedInListener.bind(this))
     }
+
+    loggedInListener() {
+        console.log(123)
+    }
 }
 
 window.addEventListener('load', async () => {

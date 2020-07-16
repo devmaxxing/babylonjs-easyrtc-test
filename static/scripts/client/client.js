@@ -12,7 +12,8 @@ class Client {
 
     init() {
         console.log('Initializing client...');
-        this.easyrtc.setStreamAcceptor((easyrtcid, stream, streamName) => {
+        this.easyrtc.setStreamAcceptor((_easyrtcid, stream) => {
+            console.log("Setting audio stream");
             this.easyrtc.setVideoObjectSrc(this.audio,stream);
         });
         this.easyrtc.enableVideo(false);

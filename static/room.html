@@ -220,12 +220,12 @@
                     // future safe
                     if (controller.onMeshLoadedObservable) {
                         controller.onMeshLoadedObservable.addOnce((rootMesh) => {
-                            controllers.push(rootMesh);
+                            controllers.push(rootMesh.parent);
                         });
                     } else {
                         controller.onMotionControllerProfileLoaded.addOnce((motionController) => {
                             motionController.onModelLoadedObservable.addOnce(() => {
-                                controllers.push(motionController.rootMesh);
+                                controllers.push(motionController.rootMesh.parent);
                             });
                         });
                     }

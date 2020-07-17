@@ -159,15 +159,13 @@
                             var keyCode = this._keys[index];
                             var speed = 0.01;
                             if (this.keysLeft.indexOf(keyCode) !== -1) {
-                                camera.rotation.y -= camera.angularSpeed;
-                                camera.direction.copyFromFloats(0, 0, 0);                
+                                camera.direction.copyFromFloats(-speed, 0, 0);                
                             }
                             else if (this.keysUp.indexOf(keyCode) !== -1) {
                                 camera.direction.copyFromFloats(0, 0, speed);               
                             }
                             else if (this.keysRight.indexOf(keyCode) !== -1) {
-                                camera.rotation.y += camera.angularSpeed;
-                                camera.direction.copyFromFloats(0, 0, 0);
+                                camera.direction.copyFromFloats(speed, 0, 0);
                             }
                             else if (this.keysDown.indexOf(keyCode) !== -1) {
                                 camera.direction.copyFromFloats(0, 0, -speed);

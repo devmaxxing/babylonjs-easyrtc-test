@@ -38,8 +38,8 @@
         window.addEventListener('DOMContentLoaded', async function() {
             const roomName = decodeURI(new URLSearchParams(document.location.search).get("roomName"));
             const mediaStreamContainer = document.getElementById('mediaStreams');
-            const datachannel = new Datachannel.Class(easyrtc)
-            const client = new Client(easyrtc, roomName, audio, datachannel, mediaStreamContainer);
+            // const datachannel = new Datachannel.Class(easyrtc) TODO resolve conflicts
+            const client = new Client(easyrtc, roomName, null, mediaStreamContainer);
             await client.init();
 
             // All the following code is entered here.

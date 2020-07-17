@@ -1,5 +1,5 @@
 class Client {
-    constructor(easyrtc, room, audio, datachannel, mediaContainer) {
+    constructor(easyrtc, room, datachannel, mediaContainer) {
         // model will be defined when app is ready so that we can get an id
         this.model = null;
         this.easyrtc = easyrtc;
@@ -10,10 +10,18 @@ class Client {
             this.room ="default";
         }
         this.mediaContainer = mediaContainer;
+        this.connectedPeers = new Set();
     }
 
     async init() {
         console.log('Initializing client...');
+        this.easyrtc.enableDataChannels(true);
+        this.easyrtc.setDataChannelOpenListener((easyrtcid) => {
+            this.connectedPeers.add(easyrtcid);
+        });
+        this.easyrtc.setDataChannelCloseListener((easyrtcid) => {
+            this.connectedPeers.delete(easyrtcid);
+        });
         this.easyrtc.setRoomOccupantListener((roomName, userList, selfInfo) => {
             for (let occupant of Object.keys(userList)) {
                 console.log("Establishing call with client " + occupant);
@@ -68,14 +76,21 @@ class Client {
             console.error(`${errorCode + ": " + errorText}`);
         });
 
+        // TODO refactor and resolve conflicts
         // init datachannel wrapper
-        try {
-            await this.datachannel.connect();
-            console.log('initialized datachannel')
-        }
-        catch (err) {
-            console.log("Error while trying to init datachannel")
-            console.err(err)
+        // try {
+        //     await this.datachannel.connect();
+        //     console.log('initialized datachannel')
+        // }
+        // catch (err) {
+        //     console.log("Error while trying to init datachannel")
+        //     console.err(err)
+        // }
+    }
+
+    broadcastEvent(eventName, data) {
+        for (let peer of this.connectedPeers) {
+            this.easyrtc.sendDataP2P(peer, eventName, data);
         }
     }
 

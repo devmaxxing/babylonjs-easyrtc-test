@@ -35,19 +35,54 @@
     <script src="./scripts/client/client.js"></script>
     <script src="./scripts/datachannel/datachannel.js"></script>
     <script>
+        function setObjectTransform(mesh, object) {
+            mesh.position.x = object.position.x;
+            mesh.position.y = object.position.y;
+            mesh.position.z = object.position.z;
+
+            mesh.rotation.x = object.rotation.x;
+            mesh.rotation.y = object.rotation.y;
+            mesh.rotation.z = object.rotation.z;
+        }
+
         window.addEventListener('DOMContentLoaded', async function() {
+            let scene;
             const roomName = decodeURI(new URLSearchParams(document.location.search).get("roomName"));
             const mediaStreamContainer = document.getElementById('mediaStreams');
             // const datachannel = new Datachannel.Class(easyrtc) TODO resolve conflicts
             const client = new Client(easyrtc, roomName, null, mediaStreamContainer);
+            client.setPeerCallback((eventType, eventData) => {
+                console.log("Received data:");
+                console.log(eventType);
+                console.log(eventData);
+                if (eventType == "stateChanged") {
+                    for (let object of eventData.changes) {
+                        if (client.model.hasObject(object.id)) {
+                            // update object transform
+                            const objectToUpdate = client.model.getObject(object.id);
+                            setObjectTransform(objectToUpdate.mesh, object);
+                        } else {
+                            // create new object
+                            const newObject = BABYLON.Mesh.CreateBox(object.id, 0.30, scene);
+                            setObjectTransform(newObject, object);
+                            client.model.addObject({
+                                id: object.id,
+                                mesh: newObject
+                            })
+                        }
+                    }
+                    
+                }
+            });
             await client.init();
 
             // All the following code is entered here.
             var canvas = document.getElementById('renderCanvas');
             var engine = new BABYLON.Engine(canvas, true);
+            let camera;
 
             var createScene = function () {
-                var scene = new BABYLON.Scene(engine);
+                let scene = new BABYLON.Scene(engine);
 
                 // Lights
                 var light0 = new BABYLON.DirectionalLight("Omni", new BABYLON.Vector3(-2, -5, 2), scene);
@@ -55,7 +90,7 @@
 
                 cameraEyeHeight = 1.6;
                 // Need a free camera for collisions
-                var camera = new BABYLON.FreeCamera("FreeCamera", new BABYLON.Vector3(0, cameraEyeHeight, -20), scene);
+                camera = new BABYLON.FreeCamera("FreeCamera", new BABYLON.Vector3(0, cameraEyeHeight, -20), scene);
                 camera.attachControl(canvas, true);
 
                 //Simple room
@@ -93,12 +128,35 @@
 
                 return scene;
             }
-            var scene = createScene();
+            scene = createScene();
             
             //next 3 lines register a render loop to repeatedly render the scene on the canvas
-            engine.runRenderLoop(function() {
+            engine.runRenderLoop(() => {
                 scene.render();
             });
+
+            setInterval(() => {
+                if (client.model) {
+                    client.broadcastEvent("stateChanged", {
+                        changes:[
+                            {
+                                id: client.model.id,
+                                objectType: "playerHead",
+                                position: {
+                                    x: camera.position.x,
+                                    y: camera.position.y,
+                                    z: camera.position.z
+                                },
+                                rotation: {
+                                    x: camera.rotation.x,
+                                    y: camera.rotation.y,
+                                    z: camera.rotation.z,
+                                }
+                            }
+                        ]
+                    });
+                }
+            }, 100);
 
             //lastly implement a canvas/window resize event handler
             window.addEventListener('resize', function() {

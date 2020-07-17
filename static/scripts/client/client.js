@@ -11,11 +11,15 @@ class Client {
         }
         this.mediaContainer = mediaContainer;
         this.connectedPeers = new Set();
+        this.peerCallback = ()=>{};
     }
 
     async init() {
         console.log('Initializing client...');
         this.easyrtc.enableDataChannels(true);
+        this.easyrtc.setPeerListener((easyrtcid, msgType, msgData, targeting) => {
+            this.peerCallback(msgType, msgData);
+        });
         this.easyrtc.setDataChannelOpenListener((easyrtcid) => {
             this.connectedPeers.add(easyrtcid);
         });
@@ -58,7 +62,8 @@ class Client {
         this.easyrtc.initMediaSource(() => {
             console.log("Initialized media source.");
             this.easyrtc.connect("BabylonTest",
-                () => {
+                (easyrtcId, roomOwner) => {
+                    this.appReady(easyrtcId);
                     console.log("Successfully connected to app. Joining room " + this.room);
                     this.easyrtc.joinRoom(this.room, null, (room) => {
                         console.log("Connected to room " + room);
@@ -86,6 +91,10 @@ class Client {
         //     console.log("Error while trying to init datachannel")
         //     console.err(err)
         // }
+    }
+
+    setPeerCallback(fn) {
+        this.peerCallback = fn;
     }
 
     broadcastEvent(eventName, data) {

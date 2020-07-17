@@ -44,6 +44,14 @@ const Models = (function (){
             let person = new Person('person');
             this.addObject(person);
         }
+
+        getObject(id) {
+            return this.Objects.get(id);
+        }
+
+        hasObject(id) {
+            return this.Objects.has(id);
+        }
     
         addObject(object3d) {
             if (!this.Objects.has(object3d.id)) {

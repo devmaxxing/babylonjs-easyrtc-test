@@ -81,54 +81,172 @@
             var engine = new BABYLON.Engine(canvas, true);
             let camera;
 
-            var createScene = function () {
-                let scene = new BABYLON.Scene(engine);
+            scene = new BABYLON.Scene(engine);
 
-                // Lights
-                var light0 = new BABYLON.DirectionalLight("Omni", new BABYLON.Vector3(-2, -5, 2), scene);
-                var light1 = new BABYLON.PointLight("Omni", new BABYLON.Vector3(2, -5, -2), scene);
+            const cameraEyeHeight = 1.6;
+            // Need a free camera for collisions
+            camera = new BABYLON.FreeCamera("FreeCamera", new BABYLON.Vector3(0, cameraEyeHeight, -20), scene);
+            camera.attachControl(canvas, true);
+            camera.inputs.removeByType("FreeCameraKeyboardMoveInput");
+            camera.direction = new BABYLON.Vector3(Math.cos(camera.angle), 0, Math.sin(camera.angle));
 
-                cameraEyeHeight = 1.6;
-                // Need a free camera for collisions
-                camera = new BABYLON.FreeCamera("FreeCamera", new BABYLON.Vector3(0, cameraEyeHeight, -20), scene);
-                camera.attachControl(canvas, true);
-
-                //Simple room
-                var box = new BABYLON.MeshBuilder.CreateBox("room", {
-                    width: 100, 
-                    height: 100,
-                    depth: 100,
-                    sideOrientation: 1
-                }, scene);
-                
-                box.material = new BABYLON.StandardMaterial("Mat", scene);
-                box.material.specularColor = new BABYLON.Color3.Black();
-                // box.material.diffuseTexture.hasAlpha = true;
-                box.position = new BABYLON.Vector3(0, 0, -20);
-
-                //Set gravity for the scene (G force like, on Y-axis)
-                scene.gravity = new BABYLON.Vector3(0, -0.9, 0);
-
-                scene.registerBeforeRender(function () {camera.position.y = cameraEyeHeight;})
-
-                // Enable Collisions
-                //scene.collisionsEnabled = true;
-                box.checkCollisions = true;
-
-                //Then apply collisions and gravity to the active camera
-                camera.checkCollisions = true;
-
-                // Load the sound and play it automatically once ready
-                // var music = new BABYLON.Sound("Music", "music.wav", scene, soundReady, {
-                // loop: true, autoplay: 1});
-
-                function soundReady(){
-                    music.play();
-                }
-
-                return scene;
+            //Key Input Manager To Use Keys to Move Forward and BackWard and Look to the Left or Right
+            var FreeCameraKeyboardWalkInput = function () {
+                this._keys = [];
+                this.keysUp = [38];
+                this.keysDown = [40];
+                this.keysLeft = [37];
+                this.keysRight = [39];
             }
-            scene = createScene();
+
+            //Add attachment controls
+            FreeCameraKeyboardWalkInput.prototype.attachControl = function (element, noPreventDefault) {
+                    var _this = this;
+                    if (!this._onKeyDown) {
+                        element.tabIndex = 1;
+                        this._onKeyDown = function (evt) {                 
+                            if (_this.keysUp.indexOf(evt.keyCode) !== -1 ||
+                                _this.keysDown.indexOf(evt.keyCode) !== -1 ||
+                                _this.keysLeft.indexOf(evt.keyCode) !== -1 ||
+                                _this.keysRight.indexOf(evt.keyCode) !== -1) {
+                                var index = _this._keys.indexOf(evt.keyCode);
+                                if (index === -1) {
+                                    _this._keys.push(evt.keyCode);
+                                }
+                                if (!noPreventDefault) {
+                                    evt.preventDefault();
+                                }
+                            }
+                        };
+                        this._onKeyUp = function (evt) {
+                            if (_this.keysUp.indexOf(evt.keyCode) !== -1 ||
+                                _this.keysDown.indexOf(evt.keyCode) !== -1 ||
+                                _this.keysLeft.indexOf(evt.keyCode) !== -1 ||
+                                _this.keysRight.indexOf(evt.keyCode) !== -1) {
+                                var index = _this._keys.indexOf(evt.keyCode);
+                                if (index >= 0) {
+                                    _this._keys.splice(index, 1);
+                                }
+                                if (!noPreventDefault) {
+                                    evt.preventDefault();
+                                }
+                            }
+                        };
+                        element.addEventListener("keydown", this._onKeyDown, false);
+                        element.addEventListener("keyup", this._onKeyUp, false);
+                    }
+                };
+
+                //Add detachment controls
+                FreeCameraKeyboardWalkInput.prototype.detachControl = function (element) {
+                    if (this._onKeyDown) {
+                        element.removeEventListener("keydown", this._onKeyDown);
+                        element.removeEventListener("keyup", this._onKeyUp);
+                        BABYLON.Tools.UnregisterTopRootEvents([
+                            { name: "blur", handler: this._onLostFocus }
+                        ]);
+                        this._keys = [];
+                        this._onKeyDown = null;
+                        this._onKeyUp = null;
+                    }
+                };
+
+                //Keys movement control by checking inputs
+                FreeCameraKeyboardWalkInput.prototype.checkInputs = function () {
+                    if (this._onKeyDown) {
+                        var camera = this.camera;
+                        for (var index = 0; index < this._keys.length; index++) {
+                            var keyCode = this._keys[index];
+                            var speed = 0.01;
+                            if (this.keysLeft.indexOf(keyCode) !== -1) {
+                                camera.rotation.y -= camera.angularSpeed;
+                                camera.direction.copyFromFloats(0, 0, 0);                
+                            }
+                            else if (this.keysUp.indexOf(keyCode) !== -1) {
+                                camera.direction.copyFromFloats(0, 0, speed);               
+                            }
+                            else if (this.keysRight.indexOf(keyCode) !== -1) {
+                                camera.rotation.y += camera.angularSpeed;
+                                camera.direction.copyFromFloats(0, 0, 0);
+                            }
+                            else if (this.keysDown.indexOf(keyCode) !== -1) {
+                                camera.direction.copyFromFloats(0, 0, -speed);
+                            }
+                            if (camera.getScene().useRightHandedSystem) {
+                                camera.direction.z *= -1;
+                            }
+                            camera.getViewMatrix().invertToRef(camera._cameraTransformMatrix);
+                            BABYLON.Vector3.TransformNormalToRef(camera.direction, camera._cameraTransformMatrix, camera._transformedDirection);
+                            camera._transformedDirection.y = 0;
+                            camera.cameraDirection.addInPlace(camera._transformedDirection);
+                        }
+                    }
+                };
+
+                //Add the onLostFocus function
+                FreeCameraKeyboardWalkInput.prototype._onLostFocus = function (e) {
+                    this._keys = [];
+                };
+                
+                //Add the two required functions for the control Name
+                FreeCameraKeyboardWalkInput.prototype.getTypeName = function () {
+                    return "FreeCameraKeyboardWalkInput";
+                };
+
+                FreeCameraKeyboardWalkInput.prototype.getSimpleName = function () {
+                    return "keyboard";
+                };
+            
+            //Add the new keys input manager to the camera.
+            camera.inputs.add(new FreeCameraKeyboardWalkInput());
+
+            const environment = scene.createDefaultEnvironment();
+
+            // XR
+            const xrHelper = await scene.createDefaultXRExperienceAsync({
+                floorMeshes: [environment.ground]
+            });
+
+            if (!xrHelper.baseExperience) {
+                // no xr support 
+            } else {
+                // all good, ready to go
+                camera = xrHelper
+            }
+            // Lights
+            var light0 = new BABYLON.DirectionalLight("Omni", new BABYLON.Vector3(-2, -5, 2), scene);
+            var light1 = new BABYLON.PointLight("Omni", new BABYLON.Vector3(2, -5, -2), scene);
+
+            //Simple room
+            var box = new BABYLON.MeshBuilder.CreateBox("room", {
+                width: 10, 
+                height: 10,
+                depth: 10,
+                sideOrientation: 1
+            }, scene);
+            
+            box.material = new BABYLON.StandardMaterial("Mat", scene);
+            box.material.specularColor = new BABYLON.Color3.Black();
+            // box.material.diffuseTexture.hasAlpha = true;
+            box.position = new BABYLON.Vector3(0, 5, -20);
+
+            //Set gravity for the scene (G force like, on Y-axis)
+            scene.gravity = new BABYLON.Vector3(0, -0.9, 0);
+
+            // Enable Collisions
+            //scene.collisionsEnabled = true;
+            box.checkCollisions = true;
+
+            //Then apply collisions and gravity to the active camera
+            camera.checkCollisions = true;
+
+            // Load the sound and play it automatically once ready
+            // var music = new BABYLON.Sound("Music", "music.wav", scene, soundReady, {
+            // loop: true, autoplay: 1});
+
+            function soundReady(){
+                music.play();
+            }
             
             //next 3 lines register a render loop to repeatedly render the scene on the canvas
             engine.runRenderLoop(() => {

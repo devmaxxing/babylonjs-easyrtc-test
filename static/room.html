@@ -239,8 +239,8 @@
             camera.checkCollisions = true;
 
             // Load the sound and play it automatically once ready
-            // var music = new BABYLON.Sound("Music", "music.wav", scene, soundReady, {
-            // loop: true, autoplay: 1});
+            var music = new BABYLON.Sound("Music", "music.wav", scene, soundReady, {
+            loop: true, autoplay: 0.25});
 
             function soundReady(){
                 music.play();

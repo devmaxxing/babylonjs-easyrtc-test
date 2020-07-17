@@ -63,21 +63,10 @@
                             setObjectTransform(objectToUpdate.mesh, object);
                         } else {
                             // create new object
-                            var faceColors = new Array(6);
-                            //var randomColor = Math.floor(Math.random()*16777215).toString(16);
-                            var n;
-                            for(n=0; n<6; n++) {
-                                faceColors[n] = new BABYLON.Color4(1,0,0,1);
-                            }
-                            
-                            var options = {
-                                width: 0.30,
-                                height: 0.30,
-                                depth: 0.30,
-                                faceColors : faceColors
-                            };
-                            
-                            const newObject = BABYLON.Mesh.CreateBox(object.id, options, scene);
+                            var materialBox = new BABYLON.StandardMaterial("texture1", scene);
+                            materialBox.diffuseColor = new BABYLON.Color3(0, 1, 0);
+                            const newObject = BABYLON.Mesh.CreateBox(object.id, 0.3, scene);
+                            newObject.material = materialBox;
                             setObjectTransform(newObject, object);
                             client.model.addObject({
                                 id: object.id,
@@ -219,10 +208,28 @@
                 floorMeshes: [environment.ground]
             });
 
+            let controllers = [];
+
             if (!xrHelper.baseExperience) {
                 // no xr support 
             } else {
                 // all good, ready to go
+                camera = xrHelper.baseExperience.camera;
+                // Add controllers to shadow.
+                xrHelper.input.onControllerAddedObservable.add((controller) => {
+                    // future safe
+                    if (controller.onMeshLoadedObservable) {
+                        controller.onMeshLoadedObservable.addOnce((rootMesh) => {
+                            controllers.push(rootMesh);
+                        });
+                    } else {
+                        controller.onMotionControllerProfileLoaded.addOnce((motionController) => {
+                            motionController.onModelLoadedObservable.addOnce(() => {
+                                controllers.push(motionController.rootMesh);
+                            });
+                        });
+                    }
+                });
             }
             // Lights
             var light0 = new BABYLON.DirectionalLight("Omni", new BABYLON.Vector3(-2, -5, 2), scene);
@@ -266,8 +273,7 @@
 
             setInterval(() => {
                 if (client.model) {
-                    client.broadcastEvent("stateChanged", {
-                        changes:[
+                    const changes = [
                             {
                                 id: client.model.id,
                                 objectType: "playerHead",
@@ -282,7 +288,28 @@
                                     z: camera.rotation.z,
                                 }
                             }
-                        ]
+                        ];
+                    for (let i = 0; i < controllers.length; i++) {
+                        const controller = controllers[i];
+                        changes.push(
+                            {
+                                id: "controller" + i + client.model.id,
+                                objectType: "playerController",
+                                position: {
+                                    x: controller.position.x,
+                                    y: controller.position.y,
+                                    z: controller.position.z
+                                },
+                                rotation: {
+                                    x: controller.rotation.x,
+                                    y: controller.rotation.y,
+                                    z: controller.rotation.z,
+                                }
+                            }
+                        );
+                    }
+                    client.broadcastEvent("stateChanged", {
+                        changes: changes
                     });
                 }
             }, 100);

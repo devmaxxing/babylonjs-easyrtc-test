@@ -219,7 +219,7 @@
                 // no xr support 
             } else {
                 // all good, ready to go
-                camera = xrHelper
+                camera = scene.activeCameras[0];
             }
             // Lights
             var light0 = new BABYLON.DirectionalLight("Omni", new BABYLON.Vector3(-2, -5, 2), scene);

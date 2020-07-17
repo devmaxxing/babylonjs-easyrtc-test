@@ -1,5 +1,5 @@
 class Client {
-    constructor(easyrtc, room, audio, datachannel) {
+    constructor(easyrtc, room, audio, datachannel, mediaContainer) {
         // model will be defined when app is ready so that we can get an id
         this.model = null;
         this.easyrtc = easyrtc;
@@ -9,37 +9,64 @@ class Client {
         if (room == null) {
             this.room ="default";
         }
-        this.audio = audio;
+        this.mediaContainer = mediaContainer;
     }
 
     async init() {
         console.log('Initializing client...');
-        this.easyrtc.setStreamAcceptor((_easyrtcid, stream) => {
-            console.log("Setting audio stream");
-            this.easyrtc.setVideoObjectSrc(this.audio,stream);
+        this.easyrtc.setRoomOccupantListener((roomName, userList, selfInfo) => {
+            for (let occupant of Object.keys(userList)) {
+                console.log("Establishing call with client " + occupant);
+                this.easyrtc.call(occupant, 
+                    (otherCaller, mediaType) => {
+                        console.log("Call established with client " + otherCaller);
+                    }, (errorCode, errMessage) => {
+                        console.error(`${errorCode + ": " + errMessage}`);
+                    }, null);
+            }
+            this.easyrtc.setRoomOccupantListener(null);
         });
+        
+        this.easyrtc.setStreamAcceptor((easyrtcid, stream) => {
+            console.log("Added new audio stream");
+            const newMediaElem = document.createElement("video");
+            this.mediaContainer.appendChild(newMediaElem);
+            newMediaElem.id = "stream-" + easyrtcid;
+            this.easyrtc.setVideoObjectSrc(newMediaElem,stream);
+        });
+
+        this.easyrtc.setOnStreamClosed(function(easyrtcid, stream, streamName) {
+            const item = document.getElementById("stream-" + easyrtcid);
+            item.parentNode.removeChild(item);
+        });
+
+        this.easyrtc.setAcceptChecker(function(easyrtcid, callback) {
+            callback(true);
+        });
+
         this.easyrtc.enableVideo(false);
         this.easyrtc.enableVideoReceive(false);
+        
         this.easyrtc.initMediaSource(() => {
-            console.log("Initialized media source. Connecting to app...");
+            console.log("Initialized media source.");
+            this.easyrtc.connect("BabylonTest",
+                () => {
+                    console.log("Successfully connected to app. Joining room " + this.room);
+                    this.easyrtc.joinRoom(this.room, null, (room) => {
+                        console.log("Connected to room " + room);
+                    }, (errorCode, errorText, roomName) => {
+                        console.error("Failed to join room " + roomName);
+                        console.error(`${errorCode + ": " + errorText}`);
+                    });
+                },
+                (errorCode, errorText) => {
+                    console.error(`${errorCode + ": " + errorText}`);
+                }
+            );
         },
         (errorCode, errorText) => {
             console.error(`${errorCode + ": " + errorText}`);
         });
-        this.easyrtc.connect("BabylonTest",
-            () => {
-                console.log("Successfully connected to app. Joining room " + this.room);
-                this.easyrtc.joinRoom(this.room, null, (room) => {
-                    console.log("Connected to room " + room);
-                }, (errorCode, errorText, roomName) => {
-                    console.error("Failed to join room " + roomName);
-                    console.error(`${errorCode + ": " + errorText}`);
-                });
-            },
-            (errorCode, errorText) => {
-                console.error(`${errorCode + ": " + errorText}`);
-            }
-        );
 
         // init datachannel wrapper
         try {
@@ -56,13 +83,5 @@ class Client {
         this.model = new Models.Client(appId);
         console.log(`Client ${appId} up and running`);
         console.log(this.model);
-    }
-
-    addListeners() {
-        this.easyrtc.setRoomOccupantListener(this.loggedInListener.bind(this));
-    }
-
-    loggedInListener() {
-        console.log(123);
     }
 }

@@ -47,10 +47,10 @@ const socketServer = socketIo.listen(webServer, {"log level":1});
 let myIceServers = [
     {"url":"stun:stun.l.google.com:19302"},
     {"url":"stun:stun1.l.google.com:19302"},
-    {"url":"stun:stun2.l.google.com:19302"},
-    {"url":"stun:stun3.l.google.com:19302"},
     {
-    "url":"turn:numb.viagenie.ca:3478"
+    "url":"turn:numb.viagenie.ca:3478",
+    "username":"[USERNAME]",
+    "credential":"[CREDENTIAL]"
     }
 ];
 
@@ -75,6 +75,22 @@ console.log("Ice Servers: " + JSON.stringify(myIceServers));
 
 easyrtc.setOption("appIceServers", myIceServers);
 easyrtc.setOption("logLevel", "debug");
+
+// Overriding the default easyrtcAuth listener, only so we can directly access its callback
+easyrtc.events.on("easyrtcAuth", function(socket, easyrtcid, msg, socketCallback, callback) {
+    easyrtc.events.defaultListeners.easyrtcAuth(socket, easyrtcid, msg, socketCallback, function(err, connectionObj){
+        if (err || !msg.msgData || !msg.msgData.credential || !connectionObj) {
+            callback(err, connectionObj);
+            return;
+        }
+
+        connectionObj.setField("credential", msg.msgData.credential, {"isShared":false});
+
+        console.log("["+easyrtcid+"] Credential saved!", connectionObj.getFieldValueSync("credential"));
+
+        callback(err, connectionObj);
+    });
+});
 
 // To test, lets print the credential to the console for every room join!
 easyrtc.events.on("roomJoin", function(connectionObj, roomName, roomParameter, callback) {

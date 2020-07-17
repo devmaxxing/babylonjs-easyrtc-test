@@ -63,16 +63,20 @@
                             setObjectTransform(objectToUpdate.mesh, object);
                         } else {
                             // create new object
+                            var faceColors = new Array(6);
+                            //var randomColor = Math.floor(Math.random()*16777215).toString(16);
+                            var n;
+                            for(n=0; n<6; n++) {
+                                faceColors[n] = new BABYLON.Color4(1,0,0,1);
+                            }
+                            
                             var options = {
                                 width: 0.30,
                                 height: 0.30,
                                 depth: 0.30,
                                 faceColors : faceColors
                             };
-                            var randomColor = Math.floor(Math.random()*16777215).toString(16);
-                            for(var n=0; n<6; n++) {
-                                faceColors[n] = randomColor;
-                            }
+                            
                             const newObject = BABYLON.Mesh.CreateBox(object.id, options, scene);
                             setObjectTransform(newObject, object);
                             client.model.addObject({

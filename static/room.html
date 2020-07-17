@@ -33,12 +33,14 @@
     <script src="./scripts/client/models.js"></script>
     <script src="./scripts/vendor/easyrtc.js"></script>
     <script src="./scripts/client/client.js"></script>
+    <script src="./scripts/datachannel/datachannel.js"></script>
     <script>
-        window.addEventListener('DOMContentLoaded', function() {
+        window.addEventListener('DOMContentLoaded', async function() {
             const roomName = decodeURI(new URLSearchParams(document.location.search).get("roomName"));
             const audio = document.getElementById('callerAudio');
-            const client = new Client(easyrtc, roomName, audio);
-            client.init();
+            const datachannel = new Datachannel.Class(easyrtc)
+            const client = new Client(easyrtc, roomName, audio, datachannel);
+            await client.init();
 
             // All the following code is entered here.
             var canvas = document.getElementById('renderCanvas');

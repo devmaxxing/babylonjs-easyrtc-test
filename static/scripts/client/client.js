@@ -1,16 +1,18 @@
 class Client {
-    constructor(easyrtc, room, audio) {
+    constructor(easyrtc, room, audio, datachannel) {
         // model will be defined when app is ready so that we can get an id
         this.model = null;
         this.easyrtc = easyrtc;
         this.room = room;
+        this.datachannel = datachannel;
+
         if (room == null) {
             this.room ="default";
         }
         this.audio = audio;
     }
 
-    init() {
+    async init() {
         console.log('Initializing client...');
         this.easyrtc.setStreamAcceptor((_easyrtcid, stream) => {
             console.log("Setting audio stream");
@@ -38,6 +40,16 @@ class Client {
                 console.error(`${errorCode + ": " + errorText}`);
             }
         );
+
+        // init datachannel wrapper
+        try {
+            await this.datachannel.connect();
+            console.log('initialized datachannel')
+        }
+        catch (err) {
+            console.log("Error while trying to init datachannel")
+            console.err(err)
+        }
     }
 
     appReady(appId) {

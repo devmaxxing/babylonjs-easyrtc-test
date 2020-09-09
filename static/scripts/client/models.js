@@ -1,6 +1,6 @@
 // A shape is an graphical object that contains coordiates
 // and can be moved
-const Models = (function (){
+const Models = (function() {
     class Object3dModel {
 
         constructor(id, mesh={}) {
@@ -16,18 +16,17 @@ const Models = (function (){
     // Key and Door are graphical objects
     class Key extends Object3dModel{}
     class Door extends Object3dModel{}
-    class Person extends Object3dModel{}
     
     // A client is a web client that renders the game.
     // Each client will keep track of the door and key coordinates
-    class Client {
-        constructor(id) {
+    class Game {
+        constructor(clientId) {
     
-            if (id == null) {
+            if (clientId == null) {
                 throw new Error("id param needs to be defined");
             }
 
-            this.id = id;
+            this.clientId = clientId;
     
             // can contain any kind of Object3d
             this.Objects = new Map();
@@ -39,10 +38,6 @@ const Models = (function (){
             // add door
             let door = new Door('door');
             this.addObject(door);
-    
-            // person
-            let person = new Person('person');
-            this.addObject(person);
         }
 
         getObject(id) {
@@ -70,7 +65,6 @@ const Models = (function (){
         Object3dModel,
         Key,
         Door,
-        Client,
-        Person
+        Game
     }
-}())
+}());

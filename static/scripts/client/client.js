@@ -80,17 +80,6 @@ class Client {
         (errorCode, errorText) => {
             console.error(`${errorCode + ": " + errorText}`);
         });
-
-        // TODO refactor and resolve conflicts
-        // init datachannel wrapper
-        // try {
-        //     await this.datachannel.connect();
-        //     console.log('initialized datachannel')
-        // }
-        // catch (err) {
-        //     console.log("Error while trying to init datachannel")
-        //     console.err(err)
-        // }
     }
 
     setPeerCallback(fn) {
@@ -103,9 +92,9 @@ class Client {
         }
     }
 
-    appReady(appId) {
-        this.model = new Models.Client(appId);
-        console.log(`Client ${appId} up and running`);
+    appReady(clientId) {
+        this.model = new Models.Game(clientId);
+        console.log(`Client ${clientId} up and running`);
         console.log(this.model);
     }
 }

@@ -48,9 +48,7 @@ let myIceServers = [
     {"url":"stun:stun.l.google.com:19302"},
     {"url":"stun:stun1.l.google.com:19302"},
     {
-    "url":"turn:numb.viagenie.ca:3478",
-    "username":"[USERNAME]",
-    "credential":"[CREDENTIAL]"
+    "url":"turn:numb.viagenie.ca:3478"
     }
 ];
 
@@ -99,7 +97,7 @@ easyrtc.events.on("roomJoin", function(connectionObj, roomName, roomParameter, c
 });
 
 // Start EasyRTC server
-rtc = easyrtc.listen(app, socketServer, null, function(err, rtcRef) {
+easyrtc.listen(app, socketServer, null, function(err, rtcRef) {
     console.log("Initiated");
     rtcRef.createApp("BabylonTest",null, function(err, appObj){
         console.log("App Created!");

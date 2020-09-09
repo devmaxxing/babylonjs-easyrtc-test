@@ -30,10 +30,9 @@
     <canvas id="renderCanvas"></canvas>
     <!-- SCRIPTS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+    <script src="https://unpkg.com/open-easyrtc@2.0.5/api/easyrtc.js"></script>
     <script src="./scripts/client/models.js"></script>
-    <script src="./scripts/vendor/easyrtc.js"></script>
     <script src="./scripts/client/client.js"></script>
-    <script src="./scripts/datachannel/datachannel.js"></script>
     <script>
         function setObjectTransform(mesh, object) {
             mesh.position.x = object.position.x;
@@ -49,12 +48,11 @@
             let scene;
             const roomName = decodeURI(new URLSearchParams(document.location.search).get("roomName"));
             const mediaStreamContainer = document.getElementById('mediaStreams');
-            // const datachannel = new Datachannel.Class(easyrtc) TODO resolve conflicts
             const client = new Client(easyrtc, roomName, null, mediaStreamContainer);
             client.setPeerCallback((eventType, eventData) => {
-                console.log("Received data:");
-                console.log(eventType);
-                console.log(eventData);
+                // console.log("Received data:");
+                // console.log(eventType);
+                // console.log(eventData);
                 if (eventType == "stateChanged") {
                     for (let object of eventData.changes) {
                         if (client.model.hasObject(object.id)) {
